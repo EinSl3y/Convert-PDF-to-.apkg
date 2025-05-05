@@ -5,16 +5,15 @@ import os
 
 # === User Configuration ===
 pdf_path = 'YourPDF.pdf'
-exclude_keywords = ['BUỔI', 'SAT VOCABULARY', 'STT', 'Word']  # Rows containing any of these keywords will be skipped
+exclude_keywords = ['BUỔI', 'SAT VOCABULARY', 'STT', 'Word']  
 output_csv = 'vocabulary_table.csv'
 output_apkg = 'vocabulary_deck.apkg'
 
 # === Optional: Manually specify column indices (0-based) ===
-use_manual_column_index = False  # Set to True if your PDF doesn't include headers
+use_manual_column_index = False  
 word_index = 1
 definition_index = 3
 example_index = 4
-
 flashcards = []
 all_rows = []
 column_indices_found = False
@@ -24,12 +23,9 @@ with pdfplumber.open(pdf_path) as pdf:
         table = page.extract_table()
         if not table:
             continue
-
         for row_index, row in enumerate(table):
             if not row or len(row) < 3:
                 continue
-
-            # Detect and set column indices from header row if not using manual indices
             if not use_manual_column_index and not column_indices_found:
                 header = [cell.lower().strip() if cell else "" for cell in row]
                 try:
@@ -37,18 +33,13 @@ with pdfplumber.open(pdf_path) as pdf:
                     definition_index = header.index('definition')
                     example_index = header.index('example')
                     column_indices_found = True
-                    continue  # skip header row
+                    continue 
                 except ValueError:
-                    continue  # header not found yet
-
-            # Skip rows with excluded keywords
+                    continue
             if any(keyword.lower() in str(cell).lower() for keyword in exclude_keywords for cell in row if cell):
                 continue
-
-            # Ensure row has enough columns
             if max(word_index, definition_index, example_index) >= len(row):
                 continue
-
             word = row[word_index].strip()
             definition = row[definition_index].strip()
             example = row[example_index].strip()
@@ -79,7 +70,6 @@ deck = genanki.Deck(2059400110, 'Vocabulary Deck')
 for card in flashcards:
     note = genanki.Note(model=model, fields=[card['front'], card['back']])
     deck.add_note(note)
-
 genanki.Package(deck).write_to_file(output_apkg)
 print(f"Created: {output_apkg}")
 
