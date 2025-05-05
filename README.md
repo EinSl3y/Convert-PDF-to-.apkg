@@ -14,6 +14,7 @@ This project extracts vocabulary words from a **tabular PDF file** and generates
   - **Back**: Definition + Example sentence
 - Generates `.apkg` file ready to import into Anki.
 - Optionally exports a `.csv` file for backup or preview.
+- After generating `.apkg`, the `.csv` file is automatically deleted.
 
 ---
 
@@ -23,7 +24,8 @@ Each row in the PDF should follow this general format:
 
 `No | Word | Word Type | Definition | Example Sentence | Meaning (optional)`
 
-> **Note:** The script only requires **Word**, **Definition**, and **Example** columns (usually columns 2, 4, and 5 respectively).
+> **Note**: The script only requires **Word**,**Definition**, and **Example columns** (usually columns 2, 4, and 5 respectively). These columns are indexed starting from `0` in the script, so make sure your PDF aligns with this setup.
+
 
 ---
 
@@ -40,9 +42,17 @@ pip install pdfplumber genanki
 Modify these variables at the top of the script:
 
 ```python
-pdf_path = 'your_file.pdf'  # Your actual PDF filename
-exclude_keywords = ['BUỔI', 'STT', 'SAT VOCABULARY']  # Keywords to skip
+pdf_path = 'YourPDF.pdf' 
+exclude_keywords = ['BUỔI', 'STT', 'SAT VOCABULARY', 'Word'] 
+use_manual_column_index = False  
+word_index = 1 
+definition_index = 3  
+example_index = 4  
 ```
+- `df_path`: Set this to the path of your PDF file containing the vocabulary list.
+- `exclude_keywords`: This list contains keywords that will be used to filter out unwanted rows in the PDF. For example, you can skip rows containing headers or irrelevant information.
+- `use_manual_column_index`: Set this to True if your PDF does not contain headers. Otherwise, the script will automatically detect the column positions.
+- `word_index`, `definition_index`, `example_index`: These are the column indices for "Word", "Definition", and "Example" in the table, respectively. By default, these are set to 1, 3, and 4 based on the expected table format. If your table structure is different, you can update these values to match the correct columns.
 
 3. **Run the Script**
 
@@ -92,4 +102,6 @@ The flashcard will look like:
 
 - PDF must contain a **real table structure**, not plain text.
 - Users can update `exclude_keywords` to match any unexpected headers or titles in their PDF.
+- If the table structure in your PDF differs from the expected format, modify the column indices (`word_index`, `definition_index`, `example_index`) to fit your data layout.
+
 
