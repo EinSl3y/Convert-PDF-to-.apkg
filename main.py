@@ -1,41 +1,67 @@
 import csv
 import pdfplumber
 import genanki
+import os
 
-# === Customize here ===
-pdf_path = '(Chính thức) TỪ VỰNG VERBAL SAT - SAT Vocab.pdf'
-exclude_keywords = ['BUỔI', 'SAT VOCABULARY', 'STT', 'Word']  # Exclude any row containing any of these keywords
+# === User Configuration ===
+pdf_path = 'YourPDF.pdf'
+exclude_keywords = ['BUỔI', 'SAT VOCABULARY', 'STT', 'Word']  # Rows containing any of these keywords will be skipped
 output_csv = 'vocabulary_table.csv'
 output_apkg = 'vocabulary_deck.apkg'
 
-# === Read and filter from PDF file ===
+# === Optional: Manually specify column indices (0-based) ===
+use_manual_column_index = False  # Set to True if your PDF doesn't include headers
+word_index = 1
+definition_index = 3
+example_index = 4
+
 flashcards = []
 all_rows = []
+column_indices_found = False
 
 with pdfplumber.open(pdf_path) as pdf:
     for page in pdf.pages:
         table = page.extract_table()
         if not table:
             continue
-        for row in table:
-            # Skip if row is empty, too short, or contains unwanted keywords
-            if not row or len(row) < 5:
+
+        for row_index, row in enumerate(table):
+            if not row or len(row) < 3:
                 continue
+
+            # Detect and set column indices from header row if not using manual indices
+            if not use_manual_column_index and not column_indices_found:
+                header = [cell.lower().strip() if cell else "" for cell in row]
+                try:
+                    word_index = header.index('word')
+                    definition_index = header.index('definition')
+                    example_index = header.index('example')
+                    column_indices_found = True
+                    continue  # skip header row
+                except ValueError:
+                    continue  # header not found yet
+
+            # Skip rows with excluded keywords
             if any(keyword.lower() in str(cell).lower() for keyword in exclude_keywords for cell in row if cell):
                 continue
-            all_rows.append(row)
-            word = row[1].strip()
-            definition = row[3].strip()
-            example = row[4].strip()
+
+            # Ensure row has enough columns
+            if max(word_index, definition_index, example_index) >= len(row):
+                continue
+
+            word = row[word_index].strip()
+            definition = row[definition_index].strip()
+            example = row[example_index].strip()
             back = f"{definition}<br><br><i>{example}</i>"
             flashcards.append({'front': word, 'back': back})
+            all_rows.append(row)
 
-# === Write to CSV (optional) ===
+# === Export to CSV ===
 with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(['Word', 'Definition', 'Example'])
     for row in all_rows:
-        writer.writerow([row[1], row[3], row[4]])
+        writer.writerow([row[word_index], row[definition_index], row[example_index]])
 
 # === Create Anki Deck ===
 model = genanki.Model(
@@ -56,3 +82,7 @@ for card in flashcards:
 
 genanki.Package(deck).write_to_file(output_apkg)
 print(f"Created: {output_apkg}")
+
+# === Delete CSV File ===
+if os.path.exists(output_csv):
+    os.remove(output_csv)
