@@ -1,5 +1,5 @@
 
-# Convert-PDF-to-.apkg (Flexible Version)
+# Convert-PDF-to-.apkg 
 
 This project extracts vocabulary words from a **tabular PDF file** and generates an Anki deck (`.apkg`) for effective SAT Verbal preparation or general vocabulary learning.
 
